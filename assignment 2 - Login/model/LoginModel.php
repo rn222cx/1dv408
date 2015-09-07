@@ -4,8 +4,8 @@ session_start();
 
 class LoginModel {
 
-    private $validUsername = 'a';
-    private $validPassword = 'a';
+    private $validUsername = 'Admin';
+    private $validPassword = 'Password';
 
 
     public static $setSessionUser = 'LoginModel::user';
