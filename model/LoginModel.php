@@ -16,10 +16,7 @@ class LoginModel {
         if($username === $this->validUsername && $password === $this->validPassword){
             $_SESSION[self::$setSessionUser] = $username;
             $_SESSION[self::$sessionLoginMessage] = 'Welcome';
-            // refresh the page and stop the execution
-          //  header('Location: ' . $_SERVER['PHP_SELF']);
-            header("Location: " . $_SERVER['REQUEST_URI']);
-            exit();
+            $this->reloadPageAndstopExecution();
         }
 
         try{
@@ -46,22 +43,22 @@ class LoginModel {
     public function destroySession(){
         unset($_SESSION[self::$setSessionUser]);
         $_SESSION[self::$sessionLoginMessage] = 'Bye bye!';
-        header("Location: " . $_SERVER['REQUEST_URI']);
-        exit();
+        $this->reloadPageAndstopExecution();
     }
 
     public function isLoginMessageUnset() {
-        // Return session message and unset it afterwards
+        // Return welcome message and unset it afterwards
         if (isset($_SESSION[self::$sessionLoginMessage])) {
-            $welcomeMessage = $_SESSION[self::$sessionLoginMessage];
+            $message = $_SESSION[self::$sessionLoginMessage];
             $_SESSION[self::$sessionLoginMessage] = null;
-            return $welcomeMessage;
+            return $message;
         }
 
     }
 
-    public function refreshPageAndDie(){
-        
+    private function reloadPageAndstopExecution(){
+        header("Location: " . $_SERVER['REQUEST_URI']);
+        exit();
     }
 
 

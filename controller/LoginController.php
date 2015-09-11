@@ -14,33 +14,26 @@ class LoginController {
 
     public function doControl(){
 
-        if($this->loginView->login()){
+//        if($this->loginView->rememberMe()){
+//            $this->loginView->setCookie();
+//        }
+//        elseif()
+
+        if($this->loginView->login() && !$this->checkIfLoggedIn()){
             $username = $this->loginView->getRequestUserName();
             $password = $this->loginView->getRequestPassword();
 
             $this->doLogin($username, $password);
         }
 
-//        if($this->loginView->rememberMe()){
-//            $this->loginView->setCookie();
-//        }
-//        elseif()
-
-        if($this->loginView->logOut())
+        if($this->loginView->logOut() && $this->checkIfLoggedIn()){
             $this->logout();
-
-        if($this->checkIfLoggedIn()){
-            $isLoggedIn = true;
-        } else{
-            $isLoggedIn = false;
         }
-
-
 
         $dtv = new DateTimeView();
         $lv = new LayoutView();
 
-        $lv->render($isLoggedIn, $this->loginView, $dtv);
+        $lv->render($this->checkIfLoggedIn(), $this->loginView, $dtv);
     }
 
     public function doLogin($username, $password){
@@ -51,18 +44,18 @@ class LoginController {
     }
 
     public function checkIfLoggedIn(){
-        // If user is logged in return welcome message
-       // if($this->loginModel->IsSessionSet()){
+
+        // if session message is set return string and reset message afterwards.
         if (isset($_SESSION[LoginModel::$sessionLoginMessage])) {
             $this->loginView->returnMessages($_SESSION[LoginModel::$sessionLoginMessage]);
             $this->loginModel->isLoginMessageUnset();
         }
+
         return $this->loginModel->IsSessionSet();
     }
 
     public function logout(){
         $this->loginModel->destroySession();
-        //$this->loginView->returnMessages($message);
     }
 
 }
