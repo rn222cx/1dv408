@@ -10,12 +10,14 @@ class LoginView {
 	private static $cookiePassword = 'LoginView::CookiePassword';
 	private static $keep = 'LoginView::KeepMeLoggedIn';
 	private static $messageId = 'LoginView::Message';
-    private $returnMessages;
 
+    private $returnMessages;
+	private $cookieStorage;
+	private $loginController;
 
     public function __construct(){
-
-    }
+		$this->cookieStorage = new CookieStorage();
+	}
 
 	/**
 	 * Create HTTP response
@@ -27,24 +29,18 @@ class LoginView {
 	public function response() {
 		$message = $this->returnMessages;
 
-        $loginController = new LoginController();
+		$this->loginController = new LoginController();
 
-
-//        if($this->logOut()) {
-//            return $this->generateLoginFormHTML($message);
-//        }
-
-        if($loginController->checkIfLoggedIn()){
-            return $this->generateLogoutButtonHTML($message);
-        }
+        if($this->loginController->checkIfLoggedIn()){
+			$response = $this->generateLogoutButtonHTML($message);
+		}
         else{
-            return $this->generateLoginFormHTML($message);
+			$response = $this->generateLoginFormHTML($message);
         }
-
 
 		//$response = $this->generateLoginFormHTML($message);
 		//$response .= $this->generateLogoutButtonHTML($message);
-		//return $response;
+		return $response;
 	}
 
 	/**
@@ -59,8 +55,9 @@ class LoginView {
 				<input type="submit" name="' . self::$logout . '" value="logout"/>
 			</form>
 		';
+
 	}
-	
+
 	/**
 	* Generate HTML code on the output buffer for the logout button
 	* @param $message, String output message
@@ -92,13 +89,13 @@ class LoginView {
 	//CREATE GET-FUNCTIONS TO FETCH REQUEST VARIABLES
 	public function getRequestUserName() {
         if(isset($_POST[self::$name])){
-            return ($_POST[self::$name]);
+            return trim($_POST[self::$name]);
         }
 	}
 
     public function getRequestPassword() {
         if(isset($_POST[self::$password])){
-            return ($_POST[self::$password]);
+            return trim($_POST[self::$password]);
         }
     }
 
@@ -113,5 +110,14 @@ class LoginView {
     public function returnMessages($message){
         return $this->returnMessages = $message;
     }
+
+	public function rememberMe(){
+		return isset($_POST[self::$keep]);
+	}
+
+//	public function setCookie(){
+//		$this->cookieStorage->save(self::$cookieName, 'rogge');
+//		$this->cookieStorage->save(self::$cookiePassword, 'losen');
+//	}
 	
 }

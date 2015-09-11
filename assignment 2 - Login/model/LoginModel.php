@@ -4,21 +4,22 @@ session_start();
 
 class LoginModel {
 
-    private $validUsername = 'Admin';
-    private $validPassword = 'Password';
+    private $validUsername = 'a';
+    private $validPassword = 'a';
 
+    private static $setSessionUser = 'LoginModel::user';
+    public static $sessionLoginMessage = 'LoginModel::message';
 
-    public static $setSessionUser = 'LoginModel::user';
-
-//    public function __construct(){
-//
-//    }
 
     public function authenticate($username, $password){
 
         if($username === $this->validUsername && $password === $this->validPassword){
             $_SESSION[self::$setSessionUser] = $username;
-            return 'Welcome';
+            $_SESSION[self::$sessionLoginMessage] = 'Welcome';
+            // refresh the page and stop the execution
+          //  header('Location: ' . $_SERVER['PHP_SELF']);
+            header("Location: " . $_SERVER['REQUEST_URI']);
+            exit();
         }
 
         try{
@@ -42,10 +43,27 @@ class LoginModel {
         return isset($_SESSION[self::$setSessionUser]);
     }
 
-    public static function destroySession(){
+    public function destroySession(){
         unset($_SESSION[self::$setSessionUser]);
-        return 'Bye bye!';
+        $_SESSION[self::$sessionLoginMessage] = 'Bye bye!';
+        header("Location: " . $_SERVER['REQUEST_URI']);
+        exit();
     }
+
+    public function isLoginMessageUnset() {
+        // Return session message and unset it afterwards
+        if (isset($_SESSION[self::$sessionLoginMessage])) {
+            $welcomeMessage = $_SESSION[self::$sessionLoginMessage];
+            $_SESSION[self::$sessionLoginMessage] = null;
+            return $welcomeMessage;
+        }
+
+    }
+
+    public function refreshPageAndDie(){
+        
+    }
+
 
 }
 ?>
