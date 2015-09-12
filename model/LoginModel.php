@@ -2,22 +2,15 @@
 
 session_start();
 
-class LoginModel {
+require_once('dal/Db.php');
 
-    private $validUsername = 'a';
-    private $validPassword = 'a';
+class LoginModel {
 
     private static $setSessionUser = 'LoginModel::user';
     public static $sessionLoginMessage = 'LoginModel::message';
 
 
     public function authenticate($username, $password){
-
-        if($username === $this->validUsername && $password === $this->validPassword){
-            $_SESSION[self::$setSessionUser] = $username;
-            $_SESSION[self::$sessionLoginMessage] = 'Welcome';
-            $this->reloadPageAndstopExecution();
-        }
 
         try{
             if(empty($username)){
@@ -26,7 +19,21 @@ class LoginModel {
             elseif(empty($password)){
                 throw new Exception('Password is missing');
             }
-            elseif($username !== $this->validUsername || $password !== $this->validPassword){
+
+            //echo $hash = password_hash($password, PASSWORD_BCRYPT);
+
+            // Check if user and password exist in the database
+            $records = new Db();
+            $records->query('SELECT username,password FROM users WHERE BINARY username = :username');
+            $records->bind(':username', $username);
+            $results = $records->single();
+
+            if(count($results) > 0 && password_verify($password, $results['password'])){
+                $_SESSION[self::$setSessionUser] = $results['username'];
+                $_SESSION[self::$sessionLoginMessage] = 'Welcome';
+                $this->reloadPageAndstopExecution();
+            }
+            else{
                 throw new Exception('Wrong name or password');
             }
 
