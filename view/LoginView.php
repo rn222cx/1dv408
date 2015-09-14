@@ -12,11 +12,12 @@ class LoginView {
 	private static $messageId = 'LoginView::Message';
 
     private $returnMessages;
+    private $loginModel;
 	private $cookieStorage;
-	private $loginController;
 
-    public function __construct(){
-		$this->cookieStorage = new CookieStorage();
+    public function __construct(LoginModel $loginModel){
+        $this->loginModel = $loginModel;
+		$this->cookieStorage = new view\CookieStorage();
 	}
 
 	/**
@@ -29,9 +30,7 @@ class LoginView {
 	public function response() {
 		$message = $this->returnMessages;
 
-		$this->loginController = new LoginController();
-
-        if($this->loginController->checkIfLoggedIn()){
+        if($this->checkIfLoggedIn()){
 			$response = $this->generateLogoutButtonHTML($message);
 		}
         else{
@@ -97,12 +96,16 @@ class LoginView {
         }
     }
 
-    public function login(){
+    public function userLoggingIn(){
         return isset($_POST[self::$login]);
     }
 
-    public function logOut(){
+    public function userLoggingOut(){
         return isset($_POST[self::$logout]);
+    }
+
+    public function checkIfLoggedIn(){
+        return $this->loginModel->isSessionSet() || $this->doCookieExist();
     }
 
     public function returnMessages($message){
@@ -113,9 +116,36 @@ class LoginView {
 		return isset($_POST[self::$keep]);
 	}
 
-//	public function setCookie(){
-//		$this->cookieStorage->save(self::$cookieName, 'rogge');
-//		$this->cookieStorage->save(self::$cookiePassword, 'losen');
-//	}
-	
+	public function setCookiePassword($hashedPassword, $time){
+		$this->cookieStorage->save(self::$cookiePassword, $hashedPassword, $time);
+	}
+
+    public function setCookieName($time){
+        $username = $this->getRequestUserName() ? : $_COOKIE[self::$cookieName];
+        $this->cookieStorage->save(self::$cookieName, $username, $time);
+    }
+
+    public function doCookieExist(){
+       return $this->cookieStorage->load(self::$cookiePassword) && $this->cookieStorage->load(self::$cookieName);
+    }
+
+    public function removeCookie(){
+        $this->cookieStorage->remove(self::$cookieName);
+        $this->cookieStorage->remove(self::$cookiePassword);
+    }
+
+    /**
+     * Check if cookie has the same value as in database
+     *
+     * @return bool
+     */
+    public function checkingManipulatedCookies($cookie){
+        if($this->cookieStorage->load(self::$cookiePassword) !== $cookie){
+            return true;
+        }
+
+        return false;
+    }
+
+
 }

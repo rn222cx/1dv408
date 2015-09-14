@@ -1,17 +1,20 @@
 <?php
 
-
+namespace view;
 
 class CookieStorage {
 
-    public function save($cookieName, $key){
-        setcookie( $cookieName, $key, -1);
+    public function save($cookieName, $key, $time){
+        setcookie($cookieName, $key, $time); // expire in a week
     }
 
     public function load($cookieName){
-        $ret = isset($_COOKIE[$cookieName]) ? $_COOKIE[$cookieName] : "";
-
-        setcookie($cookieName, "", time() -1);
-        return $ret;
+        return isset($_COOKIE[$cookieName]) ? $_COOKIE[$cookieName] : false;
     }
+
+    public function remove($cookieName){
+        unset($_COOKIE[$cookieName]);
+        setcookie($cookieName, '', time() - 3600); // remove twice to be extra sure
+    }
+
 }

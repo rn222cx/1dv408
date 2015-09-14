@@ -16,7 +16,7 @@ class Db {
         try {
             $config = parse_ini_file('.env'); // My secret database information
             $this->connection = new PDO('mysql:host='.$config['DB_HOST'].';dbname='.$config['DB_DATABASE'],$config['DB_USERNAME'],$config['DB_PASSWORD'],
-                array(PDO::ATTR_EMULATE_PREPARES => false, PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
+                array(PDO::ATTR_EMULATE_PREPARES => true, PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
 
         } catch(PDOException $e) {
             echo 'ERROR: ' . $e->getMessage();
