@@ -96,6 +96,26 @@ class LoginView {
         }
     }
 
+    public function usernameIsMissing(){
+        if(empty($_POST[self::$name])){
+            return $this->returnMessages('Username is missing');
+        }
+    }
+
+    public function passwordIsMissing(){
+        if(empty($_POST[self::$password])){
+            return $this->returnMessages('Password is missing');
+        }
+    }
+
+    public function successfullyLogin(){
+        return $this->returnMessages('Welcome');
+    }
+
+    public function wrongLoginCredentials(){
+        return $this->returnMessages('Wrong name or password');
+    }
+
     public function userLoggingIn(){
         return isset($_POST[self::$login]);
     }
@@ -135,16 +155,24 @@ class LoginView {
     }
 
     /**
-     * Check if cookie has the same value as in database
+     * Check if cookie credentials has the same value as in database
      *
      * @return bool
      */
     public function checkingManipulatedCookies($cookie){
-        if($this->cookieStorage->load(self::$cookiePassword) !== $cookie){
+
+        if($this->cookieStorage->load(self::$cookiePassword) != $cookie[0] ||
+            $this->cookieStorage->load(self::$cookieName) != $cookie[2] ||
+            $this->loginModel->setCookieTime() != $cookie[1])
+        {
             return true;
         }
-
         return false;
+    }
+
+    public function reloadPageAndStopExecution(){
+        header("Location: " . $_SERVER['REQUEST_URI']);
+        exit();
     }
 
 

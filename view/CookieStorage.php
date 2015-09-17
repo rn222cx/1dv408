@@ -6,6 +6,7 @@ class CookieStorage {
 
     public function save($cookieName, $key, $time){
         setcookie($cookieName, $key, $time); // expire in a week
+        $_COOKIE[$cookieName] = $key; // hack to update cookie
     }
 
     public function load($cookieName){

@@ -9,16 +9,15 @@ class LoginModel {
     private static $setSessionUser = 'LoginModel::user';
     public static $sessionLoginMessage = 'LoginModel::message';
 
+    /**
+     * Check if the login credentials are correct through the database
+     *
+     * @param $username
+     * @param $password
+     * @return bool
+     */
     public function authenticate($username, $password){
 
-        if(empty($username)){
-            throw new Exception('Username is missing');
-        }
-        elseif(empty($password)){
-            throw new Exception('Password is missing');
-        }
-
-        // Check if user and hashed password exist in the database
         $records = new Db();
         $records->query('SELECT username,password FROM users WHERE BINARY username = :username');
         $records->bind(':username', $username);
@@ -27,10 +26,10 @@ class LoginModel {
         if(count($results) > 0 && password_verify($password, $results['password'])){
             $_SESSION[self::$setSessionUser] = $results['username'];
             $_SESSION[self::$sessionLoginMessage] = 'Welcome';
-            return true;
+            return true; // köra en false med extended class
         }
         else{
-            throw new Exception('Wrong name or password');
+            return false;
         }
 
     }
@@ -70,10 +69,15 @@ class LoginModel {
     }
 
     public function setCookieTime(){
-        return time() + (7 * 24 * 60 * 60); // a week
+       // return time() + (7 * 24 * 60 * 60); // a week
+        return strtotime('tomorrow');
     }
 
-    public function updateCookiesInDatabase($password, $time){
+    /**
+     * @param $password
+     * @param $time
+     */
+    public function updateValuesInDatabase($password, $time){
 
         $database = new Db();
 
@@ -86,17 +90,23 @@ class LoginModel {
         $database->execute();
     }
 
+    /**
+     * @return array
+     */
     public function selectRowInDatabase(){
 
         $database = new Db();
         // use username from session if session isset or else use username from cookie
         $username = $this->isSessionSet() ? $_SESSION[self::$setSessionUser] : $_COOKIE['LoginView::CookieName'];
 
-        $database->query('SELECT cookie_password FROM users WHERE username = :username');
+        $database->query('SELECT username ,cookie_password, coockie_date FROM users WHERE username = :username');
         $database->bind(':username', $username);
         $row = $database->single();
 
-        return $row['cookie_password'];
+        $var1 = $row['cookie_password'];
+        $var2 = $row['coockie_date'];
+        $var3 = $row['username'];
+        return array($var1, $var2, $var3);
     }
 
 }

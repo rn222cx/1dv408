@@ -26,9 +26,8 @@ class LoginController {
         }
 
         if($this->loginView->doCookieExist()){
-            $getCookieFromDatabase = $this->loginModel->selectRowInDatabase();
             $this->updateCookies(); // Set new cookies
-
+            $getCookieFromDatabase = $this->loginModel->selectRowInDatabase();
             if($this->loginView->checkingManipulatedCookies($getCookieFromDatabase)){
                 $this->logout('Wrong information in cookies');
             }
@@ -49,19 +48,21 @@ class LoginController {
      */
     public function doLogin($username, $password){
 
-        try {
-            $loginSuccess = $this->loginModel->authenticate($username, $password);
-        } catch (Exception $e) {
-            // an error occurred
-            $loginSuccess = false;
-            $this->loginView->returnMessages($e->getMessage());
-        }
+        if($this->loginView->usernameIsMissing())
+            return;
+        if($this->loginView->passwordIsMissing())
+            return;
 
-        if($loginSuccess){
+        if($this->loginModel->authenticate($username, $password) == true) {
+            $this->loginView->successfullyLogin();
+
             if($this->loginView->rememberMe())
                 $this->updateCookies();
 
-            $this->reloadPageAndStopExecution();
+            $this->loginView->reloadPageAndStopExecution();
+        }
+        else{
+            return $this->loginView->wrongLoginCredentials();
         }
     }
 
@@ -81,7 +82,7 @@ class LoginController {
     public function logout($name){
         $this->loginModel->destroySession($name);
         $this->loginView->removeCookie();
-        $this->reloadPageAndStopExecution();
+        $this->loginView->reloadPageAndStopExecution();
     }
 
 
@@ -98,15 +99,9 @@ class LoginController {
         $cookieTime = $this->loginModel->setCookieTime();
         $cookiePassword = $this->loginModel->setCookiePassword();
 
-        $this->loginModel->updateCookiesInDatabase($cookiePassword, $cookieTime);
+        $this->loginModel->updateValuesInDatabase($cookiePassword, $cookieTime);
         $this->loginView->setCookieName($cookieTime);
         $this->loginView->setCookiePassword($cookiePassword, $cookieTime);
-    }
-
-
-    public function reloadPageAndStopExecution(){
-        header("Location: " . $_SERVER['REQUEST_URI']);
-        exit();
     }
 
 }
