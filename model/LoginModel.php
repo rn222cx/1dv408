@@ -24,9 +24,7 @@ class LoginModel {
         $results = $records->single();
 
         if(count($results) > 0 && password_verify($password, $results['password'])){
-            $_SESSION[self::$setSessionUser] = $results['username'];
-            $_SESSION[self::$sessionLoginMessage] = 'Welcome';
-            return true; // köra en false med extended class
+            return $_SESSION[self::$setSessionUser] = $results['username'];
         }
         else{
             return false;
@@ -36,6 +34,12 @@ class LoginModel {
 
     public function isSessionSet(){
         return isset($_SESSION[self::$setSessionUser]);
+    }
+
+    public function forceLogout($message)
+    {
+        $_SESSION[self::$sessionLoginMessage] = $message;
+        $_SESSION[ self::$setSessionUser ] = false;
     }
 
     public function destroySession($message){
@@ -56,7 +60,7 @@ class LoginModel {
 
     }
 
-    public function setCookieMessage($message){
+    public function setSessionMessage($message){
         $_SESSION[self::$sessionLoginMessage] = $message;
     }
 
@@ -77,16 +81,27 @@ class LoginModel {
      * @param $password
      * @param $time
      */
-    public function updateValuesInDatabase($password, $time){
+    public function updateValuesInDatabase($password, $time, $browser){ // Should be better with array in future projects
 
         $database = new Db();
-
         $username = $_SESSION[self::$setSessionUser];
-        $database->query('UPDATE users SET cookie_password = :cookie_password, coockie_date = :cookie_date WHERE username = :username');
+        $database->query('UPDATE users SET cookie_password = :cookie_password, coockie_date = :cookie_date, browser = :browser WHERE username = :username');
 
         $database->bind(':username', $username);
         $database->bind(':cookie_password', $password);
         $database->bind(':cookie_date', $time);
+        $database->bind(':browser', $browser);
+        $database->execute();
+    }
+
+    public function updateSingleValueInDatabase($browser){
+
+        $database = new Db();
+        $username = $_SESSION[self::$setSessionUser];
+        $database->query('UPDATE users SET browser = :browser WHERE username = :username');
+
+        $database->bind(':username', $username);
+        $database->bind(':browser', $browser);
         $database->execute();
     }
 
@@ -99,14 +114,15 @@ class LoginModel {
         // use username from session if session isset or else use username from cookie
         $username = $this->isSessionSet() ? $_SESSION[self::$setSessionUser] : $_COOKIE['LoginView::CookieName'];
 
-        $database->query('SELECT username ,cookie_password, coockie_date FROM users WHERE username = :username');
+        $database->query('SELECT username ,cookie_password, coockie_date, browser FROM users WHERE username = :username');
         $database->bind(':username', $username);
         $row = $database->single();
 
         $var1 = $row['cookie_password'];
         $var2 = $row['coockie_date'];
         $var3 = $row['username'];
-        return array($var1, $var2, $var3);
+        $var4 = $row['browser'];
+        return array($var1, $var2, $var3, $var4);
     }
 
 }

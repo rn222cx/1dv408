@@ -14,25 +14,25 @@ class LoginController {
 
     public function doControl(){
 
-        if($this->loginView->userLoggingIn() && !$this->checkIfLoggedIn()){
+        if($this->loginView->userWantsToLogin() && !$this->checkIfLoggedIn()){
             $username = $this->loginView->getRequestUserName();
             $password = $this->loginView->getRequestPassword();
 
             $this->doLogin($username, $password);
         }
 
-        if($this->loginView->userLoggingOut() && $this->checkIfLoggedIn()){
-            $this->logout('Bye bye!');
+        if($this->loginView->userWantsToLogout() && $this->checkIfLoggedIn()){
+            $this->logout($this->loginView->successfulLogoutMessage());
         }
 
         if($this->loginView->doCookieExist()){
             $this->updateCookies(); // Set new cookies
             $getCookieFromDatabase = $this->loginModel->selectRowInDatabase();
-            if($this->loginView->checkingManipulatedCookies($getCookieFromDatabase)){
-                $this->logout('Wrong information in cookies');
+            if($message = $this->loginView->checkingManipulatedCookies($getCookieFromDatabase)){
+                $this->logout($message);
             }
+            //$this->updateCookies(); // Set new cookies
         }
-
 
         $dtv = new DateTimeView();
         $lv = new LayoutView();
@@ -48,13 +48,12 @@ class LoginController {
      */
     public function doLogin($username, $password){
 
-        if($this->loginView->usernameIsMissing())
-            return;
-        if($this->loginView->passwordIsMissing())
+        if($this->loginView->MissingInput())
             return;
 
         if($this->loginModel->authenticate($username, $password) == true) {
-            $this->loginView->successfullyLogin();
+            $this->loginModel->updateSingleValueInDatabase($this->loginView->getUsersBrowser());
+            $this->loginModel->setSessionMessage($this->loginView->successfulLoginMessage());
 
             if($this->loginView->rememberMe())
                 $this->updateCookies();
@@ -62,11 +61,15 @@ class LoginController {
             $this->loginView->reloadPageAndStopExecution();
         }
         else{
-            return $this->loginView->wrongLoginCredentials();
+            return $this->loginView->wrongLoginCredentialsMessage();
         }
     }
 
 
+    /**
+     *
+     * @return bool
+     */
     public function checkIfLoggedIn(){
 
         // if session message is set return string and reset message afterwards.
@@ -74,8 +77,13 @@ class LoginController {
             $this->loginView->returnMessages($_SESSION[LoginModel::$sessionLoginMessage]);
             $this->loginModel->unsetSessionMessage();
         }
+        // If session is not hijacked and session or cookie is set then it returns true.
+        if($this->loginModel->isSessionSet() || $this->loginView->doCookieExist()){
+            if($this->loginView->checkIfSessionIsHijacked() == false)
+                return true;
+        }
+        return false;
 
-        return $this->loginModel->isSessionSet() || $this->loginView->doCookieExist();
     }
 
 
@@ -89,17 +97,18 @@ class LoginController {
     public function updateCookies(){
 
         if(!$this->loginModel->isSessionSet()){
-            $this->loginModel->setCookieMessage('Welcome back with cookie');
+            $this->loginModel->setSessionMessage($this->loginView->loginWithCookiesMessage());
             $this->loginModel->setSessionFromCookie();
         }
         elseif($this->loginView->rememberMe()){
-            $this->loginModel->setCookieMessage('Welcome and you will be remembered');
+            $this->loginModel->setSessionMessage($this->loginView->loginWithCookiesMessage());
         }
 
         $cookieTime = $this->loginModel->setCookieTime();
         $cookiePassword = $this->loginModel->setCookiePassword();
+        $usersBrowser = $this->loginView->getUsersBrowser();
 
-        $this->loginModel->updateValuesInDatabase($cookiePassword, $cookieTime);
+        $this->loginModel->updateValuesInDatabase($cookiePassword, $cookieTime, $usersBrowser);
         $this->loginView->setCookieName($cookieTime);
         $this->loginView->setCookiePassword($cookiePassword, $cookieTime);
     }

@@ -60,7 +60,7 @@ class LoginView {
 	* @param $message, String output message
 	* @return  void, BUT writes to standard output!
 	*/
-	private function generateLoginFormHTML($message)
+        private function generateLoginFormHTML($message)
     {
         return '
 			<form method="post" >
@@ -96,36 +96,40 @@ class LoginView {
         }
     }
 
-    public function usernameIsMissing(){
+    public function userWantsToLogout(){
+        return isset($_POST[self::$logout]);
+    }
+
+    public function userWantsToLogin(){
+        return isset($_POST[self::$login]);
+    }
+
+    public function successfulLoginMessage(){
+        return $this->returnMessages('Welcome');
+    }
+
+    public function successfulLogoutMessage(){
+        return $this->returnMessages('Bye bye!');
+    }
+
+    public function MissingInput(){
         if(empty($_POST[self::$name])){
             return $this->returnMessages('Username is missing');
         }
-    }
-
-    public function passwordIsMissing(){
-        if(empty($_POST[self::$password])){
+        elseif(empty($_POST[self::$password])){
             return $this->returnMessages('Password is missing');
         }
     }
 
-    public function successfullyLogin(){
-        return $this->returnMessages('Welcome');
-    }
-
-    public function wrongLoginCredentials(){
+    public function wrongLoginCredentialsMessage(){
         return $this->returnMessages('Wrong name or password');
     }
 
-    public function userLoggingIn(){
-        return isset($_POST[self::$login]);
-    }
+    public function loginWithCookiesMessage(){
+        if($this->rememberMe())
+            return $this->returnMessages('Welcome and you will be remembered');
 
-    public function userLoggingOut(){
-        return isset($_POST[self::$logout]);
-    }
-
-    public function checkIfLoggedIn(){
-        return $this->loginModel->isSessionSet() || $this->doCookieExist();
+        return $this->returnMessages('Welcome back with cookie');
     }
 
     public function returnMessages($message){
@@ -154,19 +158,39 @@ class LoginView {
         $this->cookieStorage->remove(self::$cookiePassword);
     }
 
+    public function getUsersBrowser() {
+        return $_SERVER['HTTP_USER_AGENT'];
+    }
+
+    public function checkIfLoggedIn(){
+        if($this->loginModel->isSessionSet() || $this->doCookieExist()){
+            if($this->checkIfSessionIsHijacked() == false)
+                return true;
+        }
+        return false;
+    }
     /**
      * Check if cookie credentials has the same value as in database
      *
      * @return bool
      */
     public function checkingManipulatedCookies($cookie){
-
-        if($this->cookieStorage->load(self::$cookiePassword) != $cookie[0] ||
-            $this->cookieStorage->load(self::$cookieName) != $cookie[2] ||
-            $this->loginModel->setCookieTime() != $cookie[1])
+        if($this->cookieStorage->load(self::$cookiePassword) != $cookie[0] || //coockie password
+            $this->loginModel->setCookieTime() != $cookie[1] ||               //coockie time
+            $this->cookieStorage->load(self::$cookieName) != $cookie[2] ||    //coockie username
+            $this->getUsersBrowser() != $cookie[3] )                          //users browser
         {
-            return true;
+            return $this->returnMessages('Wrong information in cookies');
         }
+        return false;
+    }
+
+    public function checkIfSessionIsHijacked(){
+        $usersBrowser = $this->loginModel->selectRowInDatabase();
+
+        if($this->getUsersBrowser() != $usersBrowser[3] )
+            return true;
+
         return false;
     }
 
@@ -174,6 +198,5 @@ class LoginView {
         header("Location: " . $_SERVER['REQUEST_URI']);
         exit();
     }
-
 
 }
