@@ -17,7 +17,6 @@ class LoginModel {
      * @return bool
      */
     public function authenticate($username, $password){
-
         $records = new Db();
         $records->query('SELECT username,password FROM users WHERE BINARY username = :username');
         $records->bind(':username', $username);
@@ -32,6 +31,9 @@ class LoginModel {
 
     }
 
+    /**
+     * @return bool
+     */
     public function isSessionSet(){
         return isset($_SESSION[self::$setSessionUser]);
     }
@@ -58,6 +60,9 @@ class LoginModel {
         $_SESSION[self::$sessionLoginMessage] = $message;
     }
 
+    /**
+     * if users session expires new one will be set from cookie
+     */
     public function setSessionFromCookie(){
         $_SESSION[self::$setSessionUser] = $_COOKIE['LoginView::CookieName'];
     }
@@ -67,7 +72,6 @@ class LoginModel {
     }
 
     public function setCookieTime(){
-       // return time() + (7 * 24 * 60 * 60); // a week
         return strtotime('tomorrow');
     }
 
@@ -75,8 +79,7 @@ class LoginModel {
      * @param $password
      * @param $time
      */
-    public function updateValuesInDatabase($password, $time, $browser){ // Should be better with array in future projects
-
+    public function updateValuesInDatabase($password, $time, $browser){
         $database = new Db();
         $username = $_SESSION[self::$setSessionUser];
         $database->query('UPDATE users SET cookie_password = :cookie_password, coockie_date = :cookie_date, browser = :browser WHERE username = :username');
@@ -89,7 +92,6 @@ class LoginModel {
     }
 
     public function updateSingleValueInDatabase($browser){
-
         $database = new Db();
         $username = $_SESSION[self::$setSessionUser];
         $database->query('UPDATE users SET browser = :browser WHERE username = :username');
@@ -103,7 +105,6 @@ class LoginModel {
      * @return array
      */
     public function selectRowInDatabase(){
-
         $database = new Db();
         // use username from session if session isset or else use username from cookie
         $username = $this->isSessionSet() ? $_SESSION[self::$setSessionUser] : $_COOKIE['LoginView::CookieName'];

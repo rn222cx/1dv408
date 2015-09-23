@@ -13,7 +13,6 @@ class LoginController {
     }
 
     public function doControl(){
-
         if($this->loginView->userWantsToLogin() && !$this->checkIfLoggedIn()){
             $username = $this->loginView->getRequestUserName();
             $password = $this->loginView->getRequestPassword();
@@ -26,7 +25,7 @@ class LoginController {
         }
 
         if($this->loginView->doCookieExist()){
-            $this->updateCookies(); // Set new cookies
+            $this->updateCookies(); // Set new cookies and also store them in the database
             $getCookieFromDatabase = $this->loginModel->selectRowInDatabase();
             if($message = $this->loginView->checkingManipulatedCookies($getCookieFromDatabase)){
                 $this->logout($message);
@@ -48,7 +47,7 @@ class LoginController {
      */
     public function doLogin($username, $password){
 
-        if($this->loginView->MissingInput())
+        if($this->loginView->checkIfFieldsIsEmpty())
             return;
 
         if($this->loginModel->authenticate($username, $password) == true) {
@@ -58,20 +57,18 @@ class LoginController {
             if($this->loginView->rememberMe())
                 $this->updateCookies();
 
-            $this->loginView->reloadPageAndStopExecution();
+            $this->loginView->redirectAndDie();
         }
         else{
             return $this->loginView->wrongLoginCredentialsMessage();
         }
     }
 
-
     /**
      *
      * @return bool
      */
     public function checkIfLoggedIn(){
-
         // if session message is set return string and reset message afterwards.
         if (isset($_SESSION[LoginModel::$sessionLoginMessage])) {
             $this->loginView->returnMessages($_SESSION[LoginModel::$sessionLoginMessage]);
@@ -86,20 +83,24 @@ class LoginController {
 
     }
 
-
     public function logout($name){
         $this->loginModel->destroySession($name);
         $this->loginView->removeCookie();
-        $this->loginView->reloadPageAndStopExecution();
+        $this->loginView->redirectAndDie();
     }
 
-
+    /**
+     *
+     * get and set cookie time and password also get users browser information.
+     * everything saves in the database.
+     */
     public function updateCookies(){
-
+        // Run if the session has expired or deleted
         if(!$this->loginModel->isSessionSet()){
             $this->loginModel->setSessionMessage($this->loginView->loginWithCookiesMessage());
             $this->loginModel->setSessionFromCookie();
         }
+        // Run if Keep me logged in is checked
         elseif($this->loginView->rememberMe()){
             $this->loginModel->setSessionMessage($this->loginView->loginWithCookiesMessage());
         }

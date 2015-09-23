@@ -112,7 +112,7 @@ class LoginView {
         return $this->returnMessages('Bye bye!');
     }
 
-    public function MissingInput(){
+    public function checkIfFieldsIsEmpty(){
         if(empty($_POST[self::$name])){
             return $this->returnMessages('Username is missing');
         }
@@ -194,7 +194,7 @@ class LoginView {
         return false;
     }
 
-    public function reloadPageAndStopExecution(){
+    public function redirectAndDie(){
         header("Location: " . $_SERVER['REQUEST_URI']);
         exit();
     }
