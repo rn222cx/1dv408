@@ -36,11 +36,11 @@ class LoginModel {
         return isset($_SESSION[self::$setSessionUser]);
     }
 
-    public function forceLogout($message)
-    {
-        $_SESSION[self::$sessionLoginMessage] = $message;
-        $_SESSION[ self::$setSessionUser ] = false;
-    }
+//    public function forceLogout($message)
+//    {
+//        $_SESSION[self::$sessionLoginMessage] = $message;
+//        $_SESSION[ self::$setSessionUser ] = false;
+//    }
 
     public function destroySession($message){
         unset($_SESSION[self::$setSessionUser]);
