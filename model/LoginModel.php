@@ -9,6 +9,8 @@ class LoginModel {
     private static $setSessionUser = 'LoginModel::user';
     public static $sessionLoginMessage = 'LoginModel::message';
 
+    private $Db;
+
     /**
      * Check if the login credentials are correct through the database
      *
@@ -17,7 +19,8 @@ class LoginModel {
      * @return bool
      */
     public function authenticate($username, $password){
-        $records = new Db();
+        $this->Db = new Db();
+        $records = $this->Db;
         $records->query('SELECT username,password FROM users WHERE BINARY username = :username');
         $records->bind(':username', $username);
         $results = $records->single();
@@ -92,7 +95,7 @@ class LoginModel {
     }
 
     public function updateSingleValueInDatabase($browser){
-        $database = new Db();
+        $database = $this->Db;
         $username = $_SESSION[self::$setSessionUser];
         $database->query('UPDATE users SET browser = :browser WHERE username = :username');
 
